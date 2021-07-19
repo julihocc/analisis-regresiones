@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uuid_id" version="2.0">
+    <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+        <dc:identifier opf:scheme="calibre" id="calibre_id">7438</dc:identifier>
+        <dc:identifier opf:scheme="uuid" id="uuid_id">a89163d1-2aa6-407f-a55a-cbf273d6be8b</dc:identifier>
+        <dc:title>Regression Analysis with Python</dc:title>
+        <dc:creator opf:file-as="Massaron, Luca" opf:role="aut">Luca Massaron</dc:creator>
+        <dc:creator opf:file-as="Massaron, Luca" opf:role="aut">Alberto Boschetti</dc:creator>
+        <dc:contributor opf:file-as="calibre" opf:role="bkp">calibre (5.19.0) [https://calibre-ebook.com]</dc:contributor>
+        <dc:date>2016-02-28T23:00:00+00:00</dc:date>
+        <dc:publisher>Packt Publishing</dc:publisher>
+        <dc:identifier opf:scheme="MOBI-ASIN">B01BFD2Z44</dc:identifier>
+        <dc:language>eng</dc:language>
+        <meta name="calibre:author_link_map" content="{&quot;Luca Massaron&quot;: &quot;&quot;, &quot;Alberto Boschetti&quot;: &quot;&quot;}"/>
+        <meta name="calibre:timestamp" content="2021-06-19T17:36:52+00:00"/>
+        <meta name="calibre:title_sort" content="Regression Analysis with Python"/>
+    </metadata>
+    <guide>
+        <reference type="cover" title="Cover" href="Regression Analysis with Python - Luca Massaron &amp; Alberto Boschetti.jpg"/>
+    </guide>
+</package>
