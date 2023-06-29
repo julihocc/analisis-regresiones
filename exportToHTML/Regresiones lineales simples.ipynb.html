@@ -1,0 +1,586 @@
+<html>
+<head>
+<title>Regresiones lineales simples.ipynb</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #808080;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #cc7832;}
+.s3 { color: #6897bb;}
+.s4 { color: #6a8759;}
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+Regresiones lineales simples.ipynb</font>
+</center></td></tr></table>
+<pre><span class="s0">#%% md 
+</span><span class="s1"># Regresiones lineales simples 
+</span><span class="s0">#%% md 
+</span><span class="s1">Vamos a discutir los siguientes temas:  
+1. Entender qué problemas puede resolver el aprendizaje automático 
+2. Qué problemas puede resolver un modelo de regresiónLos puntos fuertes y débiles de la correlación 
+3. Cómo se extienden las correlaciones a un modelo de regresión simple 
+4. Cuándo, qué y por qué del modelo de regresión 
+5. Las matemáticas esenciales detrás del método de gradiente 
+</span><span class="s0">#%% md 
+</span><span class="s1">En el proceso, utilizaremos cierta terminología y conceptos estadísticos para ofrecerle la perspectiva de la regresión lineal en el marco más amplio de la estadística, aunque nuestro enfoque seguirá siendo práctico. 
+</span><span class="s0">#%% md 
+</span><span class="s1">## Definición del problema  
+El aprendizaje automático tiene sólidas raíces en años de investigación: realmente ha sido un largo viaje desde finales de los años cincuenta, cuando Arthur Samuel aclaró que el aprendizaje automático era un &quot;campo de estudio que da a los ordenadores la capacidad de aprender sin ser explícitamente programados&quot;. 
+</span><span class="s0">#%% md 
+</span><span class="s1">En general, los algoritmos de aprendizaje automático pueden aprender de tres maneras: 
+ 
+1. Aprendizaje supervisado: Es cuando presentamos ejemplos etiquetados para aprender.  
+2. Aprendizaje no supervisado: Es cuando presentamos ejemplos sin ninguna pista, dejando dejar que el algoritmo cree una etiqueta.  
+3. Aprendizaje por refuerzo: Es cuando presentamos ejemplos sin etiquetas, como en el aprendizaje no supervisado, pero obtenemos información del entorno sobre si la suposición de la etiqueta es correcta o no. 
+</span><span class="s0">#%% md 
+</span><span class="s1">El aprendizaje no supervisado tiene importantes aplicaciones en la visión robótica y la creación de características automáticas, y el aprendizaje por refuerzo es fundamental para el desarrollo de la IA autónoma (por ejemplo, en robótica, pero también en la creación de agentes de software inteligentes). 
+</span><span class="s0">#%% md 
+</span><span class="s1">Sin embargo, el aprendizaje supervisado es el más importante en la ciencia de los datos porque nos permite hacer predicciones.  
+</span><span class="s0">#%% md 
+</span><span class="s1">## Notación 
+ 
+* En el formalismo matemático, llamamos al resultado que queremos predecir la respuesta o variable objetivo y solemos etiquetarla con la letra minúscula $y$. 
+* En cambio, las premisas se denominan variables predictivas, o simplemente atributos o características, y se etiquetan con una $x$ minúscula si hay una sola y con una $X$ mayúscula si hay muchas. 
+* Con letras mayúsculas denotaremos matrices, incluidos los vectores que, técnicamente son matrix columnas (o renglones). 
+* También es importante tener siempre en cuenta las dimensiones de X e y; así, por convención, podemos llamar n al número de observaciones y p al número de variables. 
+</span><span class="s0">#%% md 
+</span><span class="s1">## Vectores y matrices con Numpy 
+ 
+Todos los datos los representaremos en forma de matrices. Ahora mostraremos algunas formas de construir matrices (y vectores) con `numpy`. 
+</span><span class="s0">#%% 
+# vector a partir de listas</span>
+<span class="s2">import </span><span class="s1">numpy </span><span class="s2">as </span><span class="s1">np</span>
+
+<span class="s1">vector = np.array([</span><span class="s3">1</span><span class="s2">,</span><span class="s3">2</span><span class="s2">,</span><span class="s3">3</span><span class="s2">,</span><span class="s3">4</span><span class="s2">,</span><span class="s3">5</span><span class="s1">])</span>
+<span class="s1">print(vector)</span>
+<span class="s1">print(vector.shape)</span>
+<span class="s0">#%% 
+</span><span class="s1">vector_columna = vector.reshape((</span><span class="s3">5</span><span class="s2">,</span><span class="s3">1</span><span class="s1">))</span>
+<span class="s1">print(vector_columna)</span>
+<span class="s1">print(vector_columna.shape)</span>
+<span class="s0">#%% 
+</span><span class="s1">vector_renglon = vector.reshape((</span><span class="s3">1</span><span class="s2">,</span><span class="s3">5</span><span class="s1">))</span>
+<span class="s1">print(vector_renglon)</span>
+<span class="s1">print(vector_renglon.shape)</span>
+<span class="s0">#%% 
+# es posible crear matrices de manera aleatoria</span>
+
+<span class="s1">np.random.seed(</span><span class="s3">0</span><span class="s1">)</span>
+
+<span class="s1">print(np.random.randint(</span><span class="s3">10</span><span class="s2">, </span><span class="s1">size=(</span><span class="s3">2</span><span class="s2">,</span><span class="s3">2</span><span class="s1">)))</span>
+<span class="s1">print(np.random.normal(</span><span class="s3">0</span><span class="s2">, </span><span class="s3">10</span><span class="s2">, </span><span class="s1">size=(</span><span class="s3">2</span><span class="s2">,</span><span class="s3">2</span><span class="s1">)))</span>
+<span class="s1">print(np.random.binomial(</span><span class="s3">10</span><span class="s2">, </span><span class="s3">.25</span><span class="s2">, </span><span class="s1">size=(</span><span class="s3">2</span><span class="s2">,</span><span class="s3">2</span><span class="s1">)))</span>
+<span class="s1">print(np.random.poisson(</span><span class="s3">10</span><span class="s2">, </span><span class="s1">size=(</span><span class="s3">2</span><span class="s2">,</span><span class="s3">2</span><span class="s1">)))</span>
+<span class="s0">#%% 
+# existen otras maneras de crear matrices</span>
+<span class="s1">print(np.zeros((</span><span class="s3">5</span><span class="s2">,</span><span class="s3">2</span><span class="s1">))</span><span class="s2">, </span><span class="s4">&quot;</span><span class="s2">\n</span><span class="s4">&quot;</span><span class="s1">)</span>
+<span class="s1">print(np.ones(</span><span class="s3">5</span><span class="s1">)</span><span class="s2">, </span><span class="s4">&quot;</span><span class="s2">\n</span><span class="s4">&quot;</span><span class="s1">)</span>
+<span class="s1">print(np.array(range(</span><span class="s3">20</span><span class="s1">)).reshape((</span><span class="s3">5</span><span class="s2">,</span><span class="s3">4</span><span class="s1">))</span><span class="s2">, </span><span class="s4">&quot;</span><span class="s2">\n</span><span class="s4">&quot;</span><span class="s1">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">## La familia de modelos lineales 
+ 
+En estadística, la familia de modelos lineales se denomina modelo lineal generalizado (MLG). Mediante transformaciones, restricciones y métodos de optimización, los MLG pueden resolver una amplia gama de problemas diferentes. 
+</span><span class="s0">#%% md 
+</span><span class="s1">En este curso, no nos extenderemos más allá de lo necesario para el campo estadístico. Sin embargo, propondremos un par de modelos de la gran familia de los MLG, a saber, la regresión lineal y la regresión logística; ambos métodos son apropiados para resolver los dos problemas más básicos de la ciencia de los datos: la regresión y la clasificación. 
+</span><span class="s0">#%% md 
+</span><span class="s1">## Preparación para descubrir una regresión lineal simple 
+ 
+Un conjunto de datos es una estructura de datos que contiene variables de predicción y, a veces, de respuesta. A efectos de aprendizaje automático, puede estructurarse en forma de matriz, en forma de tabla con filas y columnas. 
+</span><span class="s0">#%% md 
+</span><span class="s1">Para la presentación inicial de la regresión lineal en su versión simple (utilizando únicamente una variable predictiva para pronosticar la variable de respuesta), hemos elegido un par de conjuntos de datos relativos a la evaluación inmobiliaria. 
+</span><span class="s0">#%% md 
+</span><span class="s1">El primer conjunto de datos es conocido. Tomado del artículo de  
+    *Harrison, D. y Rubinfeld, D.L. Hedonic Housing Prices and the Demand for Clean Air (J. Environ. Economics &amp; Management, vol.5, 81-102, 1978)*,  
+el conjunto de datos puede encontrarse en muchos paquetes de análisis y está presente en el sitio web de la U.S. paquetes de análisis y está presente en la UCI Machine Learning Repository (https://archive.ics.uci.edu/ml/datasets/Housing). 
+</span><span class="s0">#%% md 
+</span><span class="s1">El conjunto de datos está formado por 506 secciones censales de Boston del censo de 1970 y presenta 21 variables relativas a diversos aspectos que pueden influir en el valor de los inmuebles. El objetivo es el valor monetario medio de las viviendas, expresado en miles de dólares.  
+</span><span class="s0">#%% md 
+</span><span class="s1">Entre las características disponibles, hay algunas bastante obvias, como el número de habitaciones, la antigüedad de los edificios y los niveles de delincuencia en el barrio, y otras menos obvias, como la concentración de contaminación, la disponibilidad de escuelas cercanas escuelas, el acceso a las autopistas y la distancia a los centros de trabajo. 
+</span><span class="s0">#%% md 
+</span><span class="s1">El segundo conjunto de datos del repositorio Statlib de la Universidad Carnegie Mellon (https://archive.ics.uci.edu/ml/datasets/Housing) contiene 20.640 observaciones derivadas del censo de Estados Unidos de 1990. 
+</span><span class="s0">#%% md 
+</span><span class="s1">* Cada observación es una serie de estadísticas (9 variables predictivas) de un grupo de bloques, es decir, aproximadamente 1.425 personas que viven en una zona geográficamente compacta.  
+* La variable de respuesta es un indicador del valor de la vivienda de ese bloque (técnicamente es el logaritmo natural del valor medio de la vivienda en el momento del censo). 
+* Las variables predictoras son básicamente la mediana de los ingresos. 
+</span><span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Importaremos ambos conjuntos para su análisis 
+&quot;&quot;&quot;</span>
+<span class="s0"># el conjunto de California tiene que descargarse</span>
+<span class="s2">from </span><span class="s1">sklearn.datasets </span><span class="s2">import </span><span class="s1">fetch_california_housing</span>
+<span class="s1">california = fetch_california_housing()</span>
+<span class="s1">type(california)</span>
+<span class="s0">#%% 
+# el conjunto de Boston ya está incluido</span>
+<span class="s0"># es en este conjunto en el que nos enfocaremos</span>
+<span class="s2">from </span><span class="s1">sklearn.datasets </span><span class="s2">import </span><span class="s1">load_boston</span>
+<span class="s1">boston = load_boston()</span>
+<span class="s1">type(boston)</span>
+<span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Importaremos los paquetes necesarios 
+1. numpy: análisis numérico 
+2. pandas: marcos de datos 
+3. matplotlib: trazo de gráficas 
+&quot;&quot;&quot;</span>
+<span class="s2">import </span><span class="s1">pandas </span><span class="s2">as </span><span class="s1">pd</span>
+<span class="s0">#%% 
+# convertimos los datos de Boston en un marco de datos</span>
+<span class="s1">dataset = pd.DataFrame(boston.data</span><span class="s2">, </span><span class="s1">columns=boston.feature_names)</span>
+<span class="s1">dataset[</span><span class="s4">'target'</span><span class="s1">] = boston.target</span>
+<span class="s1">dataset.head()</span>
+<span class="s0">#%% md 
+</span><span class="s1">Aunque una regresión lineal es simple, en realidad el modelo más sencillo es *la media* aritmética. Sin embargo, esta solamente funciona relativamente bien si los datos están normalmente distribuidos. 
+</span><span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Densidad normal y su implementación en Python 
+&quot;&quot;&quot;</span>
+<span class="s0"># pyplot será nuestra herramienta básica para graficar</span>
+<span class="s2">import </span><span class="s1">matplotlib.pyplot </span><span class="s2">as </span><span class="s1">plt</span>
+<span class="s0"># un viejo conocido</span>
+<span class="s2">import </span><span class="s1">numpy </span><span class="s2">as </span><span class="s1">np</span>
+<span class="s0"># importamos la clase que modela las variables normales</span>
+<span class="s2">from </span><span class="s1">scipy.stats </span><span class="s2">import </span><span class="s1">norm</span>
+<span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Forma de la función de densidad normal 
+&quot;&quot;&quot;</span>
+<span class="s0"># linspace(a, b, n) crea una malla de punto desde `a` hasta `b`</span>
+<span class="s0"># separados por `n` sub intervalos</span>
+<span class="s1">x = np.linspace(-</span><span class="s3">4</span><span class="s2">,</span><span class="s3">4</span><span class="s2">,</span><span class="s3">100</span><span class="s1">)</span>
+<span class="s0"># trazaremos las gráficas de la distribución normal para diferentes parámetros</span>
+<span class="s2">for </span><span class="s1">mean</span><span class="s2">, </span><span class="s1">variance </span><span class="s2">in </span><span class="s1">[(</span><span class="s3">0</span><span class="s2">,</span><span class="s3">0.7</span><span class="s1">)</span><span class="s2">,</span><span class="s1">(</span><span class="s3">0</span><span class="s2">,</span><span class="s3">1</span><span class="s1">)</span><span class="s2">,</span><span class="s1">(</span><span class="s3">1</span><span class="s2">,</span><span class="s3">1.5</span><span class="s1">)</span><span class="s2">,</span><span class="s1">(-</span><span class="s3">2</span><span class="s2">,</span><span class="s3">0.5</span><span class="s1">)]:</span>
+    <span class="s0"># pdf = probability density function</span>
+    <span class="s0"># es la función puntual de probabilidad</span>
+    <span class="s1">y = norm(loc=mean</span><span class="s2">,</span><span class="s1">scale=variance).pdf(x)</span>
+    <span class="s1">plt.plot(x</span><span class="s2">,</span><span class="s1">y)</span>
+<span class="s1">plt.show()</span>
+<span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Trazamos el histograma de la variable objetivo del marco de datos 
+&quot;&quot;&quot;</span>
+<span class="s1">dataset[</span><span class="s4">&quot;target&quot;</span><span class="s1">].plot(</span>
+    <span class="s1">kind=</span><span class="s4">&quot;hist&quot;</span>
+<span class="s1">)</span>
+<span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Ahora, bosquejemos una función de densidad aproximada 
+&quot;&quot;&quot;</span>
+<span class="s1">dataset[</span><span class="s4">&quot;target&quot;</span><span class="s1">].plot(</span>
+    <span class="s1">kind=</span><span class="s4">&quot;kde&quot;</span>
+<span class="s1">)</span>
+<span class="s0">#%% 
+</span><span class="s2">from </span><span class="s1">scipy.stats </span><span class="s2">import </span><span class="s1">skew</span><span class="s2">,</span><span class="s1">kurtosis</span>
+<span class="s1">info = </span><span class="s4">&quot;&quot;&quot; 
+Estadísticos  
+{} 
+ 
+Asimetría (Skewness): {} 
+Curtosis (Kurtosis):{} 
+&quot;&quot;&quot;</span><span class="s1">.format(dataset[</span><span class="s4">&quot;target&quot;</span><span class="s1">].describe()</span><span class="s2">,</span>
+      <span class="s0">#dataset[&quot;target&quot;].skew(),</span>
+        <span class="s1">skew(dataset[</span><span class="s4">&quot;target&quot;</span><span class="s1">])</span><span class="s2">,</span>
+      <span class="s0">#dataset[&quot;target&quot;].kurtosis())</span>
+           <span class="s1">kurtosis(dataset[</span><span class="s4">&quot;target&quot;</span><span class="s1">]</span><span class="s2">, </span><span class="s1">fisher=</span><span class="s2">True</span><span class="s1">)</span>
+          <span class="s1">)</span>
+<span class="s1">print(info)</span>
+<span class="s0">#%% md 
+</span><span class="s1">Como podemos observar, la distribución tiene *asimetría positiva* y *leptocurtosis*. Para más detalles de este concepto consulta [Kurtosis() &amp; Skew() Function In Pandas](https://medium.com/@atanudan/kurtosis-skew-function-in-pandas-aa63d72e20de) y la documentación correspondiente de Scipy para las funciones [skew()](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.skew.html) y [kurtosis()](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.kurtosis.html). 
+</span><span class="s0">#%% md 
+</span><span class="s1">Ahora podemos evaluar los resultados midiendo el error producido en la predicción de los valores reales de &quot;y&quot; por esta regla. La estadística sugiere que, para medir la diferencia entre la predicción y el valor real, debemos elevar al cuadrado las diferencias y luego sumarlas todas. Este se denomina suma de errores al cuadrado: 
+</span><span class="s0">#%% 
+# pd.Series nos permite tratar una columna como una Serie de datos</span>
+<span class="s0"># en la que podemos aplicar directamente operadores como la exponenciación</span>
+<span class="s1">mean_expected_value = dataset[</span><span class="s4">&quot;target&quot;</span><span class="s1">].mean()</span>
+<span class="s1">print(mean_expected_value)</span>
+<span class="s1">Squared_errors = pd.Series(dataset[</span><span class="s4">'target'</span><span class="s1">]-mean_expected_value)**</span><span class="s3">2</span>
+<span class="s1">SSE = np.sum(Squared_errors)</span>
+<span class="s1">print(</span><span class="s4">'Sum of Squared Errors (SSE): {:.1f}'</span><span class="s1">.format(SSE))</span>
+<span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Generaremos un histograma para analizar la distribución de los errores cuadráticos 
+&quot;&quot;&quot;</span>
+<span class="s1">density_plot = Squared_errors.plot(</span>
+    <span class="s1">kind=</span><span class="s4">'hist'</span><span class="s2">, </span>
+    <span class="s1">bins=range(</span><span class="s3">0</span><span class="s2">, </span><span class="s3">800</span><span class="s2">, </span><span class="s3">30</span><span class="s1">)</span>
+<span class="s1">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">## Como medir las relaciones lineales 
+ 
+En estadística, hay una cantidad que ayuda a medir cómo se relacionan dos variables: **la correlación.** 
+ 
+Primero estandarizaremos las variables de la siguiente manera $$x=\frac{x-\bar{x}}{\sigma}$$ 
+</span><span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+En Python se puede lograr vía la siguiente función 
+ 
+La desviación estándar, denotada por la letra griega sigma es la raíz cuadrada  
+de la media de las desviaciones al cuadrado de la media, es decir,  
+std = sqrt(mean(x)), where x = abs(a - a.mean())**2. 
+ 
+En Numpy, está implementada como la función std() 
+&quot;&quot;&quot;</span>
+
+<span class="s2">def </span><span class="s1">standardize(random_variable):</span>
+    <span class="s2">return </span><span class="s1">(random_variable - np.mean(random_variable))/np.std(random_variable)</span>
+<span class="s0">#%% md 
+</span><span class="s1">A continuación definimos la covarianza, la cual será positiva si la relación es directa (cuando $x$ crece también $y$ lo hace) y si es negativa, la relación es indirecta (cuando $x$ crece, $y$ decrece). Definimos la covarianza como 
+ 
+$$cov(x,y)=\frac{1}{n} \sum(x-\bar{x})(y-\bar{y})$$ 
+</span><span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Implementación de la covarianza en Python 
+&quot;&quot;&quot;</span>
+<span class="s2">def </span><span class="s1">covariance(variable_1</span><span class="s2">, </span><span class="s1">variable_2</span><span class="s2">, </span><span class="s1">bias=</span><span class="s3">0</span><span class="s1">):</span>
+    <span class="s1">n_obs = len(variable_1)</span>
+    <span class="s1">delta_1 = variable_1 - np.mean(variable_1)</span>
+    <span class="s1">delta_2 = variable_2 - np.mean(variable_2)    </span>
+    <span class="s2">return </span><span class="s1">np.sum(delta_1*delta_2)/(n_obs - int(bias))</span>
+<span class="s0">#%% md 
+</span><span class="s1">Finalmente, definimos el coeficiente $r$ correlación de Pearson, cuyas propiedades más relevantes son 
+1. El valor del índice de correlación varía en el intervalo \[-1,1\], indicando el signo el sentido de la relación: 
+2. Si r=1, existe una correlación positiva perfecta. El índice indica una dependencia total entre las dos variables denominada relación directa: cuando una de ellas aumenta, la otra también lo hace en proporción constante. 
+3. Si 0&lt;r&lt;1 entonces existe una correlación positiva. 
+4. Si r=0 entonces no existe relación lineal, pero esto no necesariamente implica que las variables son independientes: pueden existir todavía relaciones no lineales entre las dos variables. 
+5. Si -1&lt;r&lt;0, existe una correlación negativa. 
+6. Si r=-1, existe una correlación negativa perfecta. El índice indica una dependencia total entre las dos variables llamada relación inversa: cuando una de ellas aumenta, la otra disminuye en proporción constante. 
+</span><span class="s0">#%% md 
+</span><span class="s1">Esta correlación se define como  
+$$r(x,y)=\frac{1}{n} \frac{\sum(x-\bar{x})(y-\bar{y})}{\sigma_x \sigma_y}$$ 
+ 
+Sin embargo, observa que se puede definir de manera equivalente a partir de la covarianza y de la de estandarización: 
+</span><span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Implementaremos la correlación de Pearson de la siguiente manera: 
+&quot;&quot;&quot;</span>
+<span class="s2">def </span><span class="s1">correlation(var1</span><span class="s2">,</span><span class="s1">var2</span><span class="s2">,</span><span class="s1">bias=</span><span class="s2">False</span><span class="s1">):</span>
+    <span class="s2">return </span><span class="s1">covariance(standardize(var1)</span><span class="s2">, </span><span class="s1">standardize(var2)</span><span class="s2">, </span><span class="s1">bias)</span>
+<span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Ahora calcularemos nuestra implementación en el ejemplo anterior  
+y la compararemos con las funciones propias de Scipy 
+&quot;&quot;&quot;</span>
+<span class="s2">from </span><span class="s1">scipy.stats.stats </span><span class="s2">import </span><span class="s1">pearsonr</span>
+<span class="s1">r = correlation(dataset[</span><span class="s4">&quot;RM&quot;</span><span class="s1">]</span><span class="s2">, </span><span class="s1">dataset[</span><span class="s4">&quot;target&quot;</span><span class="s1">])</span>
+<span class="s0"># {dato:.5f} nos permite inserta el dato que ingresamos como argumento en format() </span>
+<span class="s0"># con cinco decimates de precisión</span>
+<span class="s1">print(</span><span class="s4">&quot;Nuestra estimación del coeficiente de correlación: r={dato:.5f}&quot;</span><span class="s1">.format(dato=r))</span>
+<span class="s1">r_sp</span><span class="s2">, </span><span class="s1">_ = pearsonr(dataset[</span><span class="s4">&quot;RM&quot;</span><span class="s1">]</span><span class="s2">, </span><span class="s1">dataset[</span><span class="s4">&quot;target&quot;</span><span class="s1">])</span>
+<span class="s1">print(</span><span class="s4">&quot;Estimación del coeficiente con Scipy: r={dato:.5f}&quot;</span><span class="s1">.format(dato=r_sp))</span>
+<span class="s1">print(_)</span>
+<span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Graficaremos el diagrama de dispersión para visualizar los resultados 
+&quot;&quot;&quot;</span>
+<span class="s1">x_range = [dataset[</span><span class="s4">&quot;RM&quot;</span><span class="s1">].min()</span><span class="s2">, </span><span class="s1">dataset[</span><span class="s4">&quot;RM&quot;</span><span class="s1">].max()]</span>
+<span class="s1">y_range = [dataset[</span><span class="s4">&quot;target&quot;</span><span class="s1">].min()</span><span class="s2">, </span><span class="s1">dataset[</span><span class="s4">&quot;target&quot;</span><span class="s1">].max()]</span>
+<span class="s1">scatter_plot = dataset.plot(</span>
+    <span class="s1">kind=</span><span class="s4">&quot;scatter&quot;</span><span class="s2">, </span><span class="s1">x=</span><span class="s4">&quot;RM&quot;</span><span class="s2">, </span><span class="s1">y=</span><span class="s4">&quot;target&quot;</span><span class="s2">,</span>
+    <span class="s1">xlim = x_range</span><span class="s2">, </span>
+    <span class="s1">ylim = y_range</span>
+<span class="s1">)</span>
+
+<span class="s1">media_Y = scatter_plot.plot(</span>
+    <span class="s1">x_range</span><span class="s2">, </span>
+    <span class="s1">[dataset[</span><span class="s4">&quot;target&quot;</span><span class="s1">].mean()</span><span class="s2">, </span><span class="s1">dataset[</span><span class="s4">&quot;target&quot;</span><span class="s1">].mean()]</span><span class="s2">, </span>
+    <span class="s4">&quot;--&quot;</span><span class="s2">,</span>
+    <span class="s1">color=</span><span class="s4">&quot;red&quot;</span><span class="s2">, </span>
+    <span class="s1">linewidth=</span><span class="s3">2</span>
+<span class="s1">)</span>
+
+<span class="s1">media_X = scatter_plot.plot(</span>
+    <span class="s1">[dataset[</span><span class="s4">&quot;RM&quot;</span><span class="s1">].mean()</span><span class="s2">, </span><span class="s1">dataset[</span><span class="s4">&quot;RM&quot;</span><span class="s1">].mean()]</span><span class="s2">, </span>
+    <span class="s1">y_range</span><span class="s2">, </span>
+    <span class="s4">&quot;--&quot;</span><span class="s2">,</span>
+    <span class="s1">color=</span><span class="s4">&quot;green&quot;</span><span class="s2">, </span>
+    <span class="s1">linewidth=</span><span class="s3">2</span>
+<span class="s1">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">**¿Qué implicación tiene la correlación que obtuvimos anteriormente, con la distribución de los puntos cuadrante a cuadrante?** 
+</span><span class="s0">#%% md 
+</span><span class="s1">## Regresiones lineales con Statsmodels 
+ 
+Formalmente, una regresión lineal es una relación de la forma 
+$$y =  X \beta   + \beta_0$$ 
+donde 
+* $y$ es un vector columna con registros de la respuesta 
+* $X$ es un vector columna con registros del predictor 
+* $\beta, \beta_0$ escalares 
+* $\beta_0$ se conoce como *sesgo* 
+* $\beta_1$ se conoce como *peso* 
+</span><span class="s0">#%% md 
+</span><span class="s1">Existen dos métodos para generar regresiones lineales con el paquete `Statsmodels`: 
+1. `statsmodels.api`: Funciona con variables predictoras y de respuesta distintas y requiere que se defina cualquier transformación de las variables en la variable predictora, incluyendo la adición de la ordenada al origen. 
+2. `statsmodels.formula.api`: Funciona de forma similar a R, permitiendo especificar una forma funcional (la fórmula de la suma de los predictores). 
+</span><span class="s0">#%% md 
+</span><span class="s1">Ilustraremos nuestro ejemplo usando `statsModels.api`. Sin embargo, también mostraremos un método alternativo con `statsmodels.formula.api.` 
+</span><span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Importaremos ambos módulos y definiremos las variables 
+&quot;&quot;&quot;</span>
+
+<span class="s2">import </span><span class="s1">statsmodels.api </span><span class="s2">as </span><span class="s1">sm</span>
+
+<span class="s1">y = dataset[</span><span class="s4">'target'</span><span class="s1">]</span>
+<span class="s1">X = dataset[</span><span class="s4">'RM'</span><span class="s1">]</span>
+<span class="s1">print(X)</span>
+
+<span class="s0">#%% 
+# La variable X debe ampliarse con un valor constante; </span>
+<span class="s0"># el sesgo se calculará en consecuencia.</span>
+<span class="s1">X = sm.add_constant(X)</span>
+<span class="s1">print(X)</span>
+<span class="s0">#%% md 
+</span><span class="s1">Como mencionamos, la fórmula de regresión es $y =  X \beta + \beta_0$, pero al hacer la transformación anterior se reduce a $y= (1:X)(\beta_0, \beta)'=\bar{X}\bar{\beta}$. 
+</span><span class="s0">#%% raw 
+</span><span class="s1">&quot;&quot;&quot; 
+Implementación de la regresión con SMF.  
+ 
+Esta sintaxis es más parecida a R, pero no la ocuparemos en resto de la unidad.  
+&quot;&quot;&quot; 
+linear_regression = smf.ols(formula='target ~ RM', data=dataset) 
+fitted_model = linear_regression.fit() 
+</span><span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Implementación con SM 
+&quot;&quot;&quot;</span>
+<span class="s1">linear_regression = sm.OLS(y</span><span class="s2">,</span><span class="s1">X)</span>
+<span class="s1">fitted_model = linear_regression.fit()</span>
+<span class="s0"># imprimimos un resumen de los parámetros y estadísticos de la regresión</span>
+<span class="s1">fitted_model.summary()</span>
+<span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+La información de mayor interés para nosotros es los coeficientes y las predicciones 
+&quot;&quot;&quot;</span>
+<span class="s1">print(fitted_model.params)</span>
+<span class="s1">betas = np.array(fitted_model.params)</span>
+<span class="s1">fitted_values = fitted_model.predict(X)</span>
+<span class="s1">print(fitted_values)</span>
+<span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Un valor importante a considerar es `R-squared`. Este es el coeficiente de determinación,  
+una medida de lo bien que lo hace la regresión con respecto a una media simple.  
+También se puede calcular de la siguiente manera: 
+&quot;&quot;&quot;</span>
+<span class="s0"># diferencia de cuadrados respecto a la media</span>
+<span class="s1">total_variation = np.sum((dataset[</span><span class="s4">'target'</span><span class="s1">]-dataset[</span><span class="s4">'target'</span><span class="s1">].mean())**</span><span class="s3">2</span><span class="s1">)</span>
+<span class="s0"># diferencia de cuadrados respecto a la regresión</span>
+<span class="s1">unexplained_variation = np.sum((dataset[</span><span class="s4">'target'</span><span class="s1">]-fitted_values)**</span><span class="s3">2</span><span class="s1">)</span>
+<span class="s0"># diferencia relativa entre la media y la regresión</span>
+<span class="s1">R2 = </span><span class="s3">1 </span><span class="s1">- unexplained_variation/total_variation</span>
+<span class="s1">print(np.round(R2</span><span class="s2">, </span><span class="s3">3</span><span class="s1">))</span>
+<span class="s0">#%% md 
+</span><span class="s1">Para ahondar en la definición del valor R-cuadrada, consulta los siguientes artículos: 
+* [R-Squared Definition](https://www.investopedia.com/terms/r/r-squared.asp) 
+* [R-Squared vs. Adjusted R-Squared: What's the Difference?](https://www.investopedia.com/ask/answers/012615/whats-difference-between-rsquared-and-adjusted-rsquared.asp) 
+</span><span class="s0">#%% md 
+</span><span class="s1">Para más detalles sobre el significado de los diferentes parámetros y estadísticos del resumen, consulta el documento adjunto que te proporcionamos.  
+</span><span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Observación: La media siempre está contenida en la regresión lineal 
+&quot;&quot;&quot;</span>
+<span class="s1">X_mean = np.mean(X)</span>
+<span class="s1">print(X_mean)</span>
+<span class="s1">y_mean = np.mean(y)</span>
+<span class="s1">print(y_mean)</span>
+<span class="s1">print(fitted_model.predict(X_mean))</span>
+<span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Observa que para algunos valores de x, la predicción se vuelve negativa 
+&quot;&quot;&quot;</span>
+<span class="s1">fitted_model.predict([</span><span class="s3">1</span><span class="s2">,</span><span class="s3">1</span><span class="s1">])</span>
+<span class="s0">#%% md 
+</span><span class="s1">Esto nos deja una importante lección: **Una regresión lineal siempre puede trabajar dentro del rango de valores que aprendió (esto se llama interpolación) pero puede proporcionar valores correctos para sus límites de aprendizaje (una actividad predictiva diferente llamada extrapolación) únicamente en determinadas condiciones.** 
+</span><span class="s0">#%% 
+</span><span class="s1">scatter_plot = dataset.plot(</span>
+    <span class="s1">kind=</span><span class="s4">&quot;scatter&quot;</span><span class="s2">, </span><span class="s1">x=</span><span class="s4">&quot;RM&quot;</span><span class="s2">, </span><span class="s1">y=</span><span class="s4">&quot;target&quot;</span><span class="s2">,</span>
+    <span class="s1">xlim = x_range</span><span class="s2">, </span>
+    <span class="s1">ylim = y_range</span>
+<span class="s1">)</span>
+
+<span class="s1">scatter_plot.plot(</span>
+    <span class="s1">dataset[</span><span class="s4">&quot;RM&quot;</span><span class="s1">]</span><span class="s2">, </span><span class="s1">fitted_values</span><span class="s2">,     </span>
+    <span class="s4">&quot;--&quot;</span><span class="s2">,</span>
+    <span class="s1">color=</span><span class="s4">&quot;red&quot;</span><span class="s2">, </span>
+    <span class="s1">linewidth=</span><span class="s3">2</span>
+<span class="s1">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">## Evaluación de los valores ajustados 
+ 
+Existen algunos problemas a los que debemos estar atentos: 
+1. **Valores demasiado alejados de la media.** Los residuos estandarizados grandes indican una grave dificultad al modelar dichas observaciones. Además, en el proceso de aprendizaje de estos valores, *los coeficientes de regresión pueden haber sido distorsionados.* 
+2. La varianza no homogénea señala que la regresión no funciona correctamente cuando el predictor tiene determinados valores. 
+3. Las formas extrañas en la nube de puntos residuales pueden indicar que se necesita un modelo más complejo para los datos que estás analizando. 
+</span><span class="s0">#%% md 
+</span><span class="s1">En nuestro caso, podemos calcular fácilmente los residuos restando los valores ajustados de la regresión y luego trazando los residuos estandarizados resultantes en un gráfico. 
+</span><span class="s0">#%% 
+# Los residuales son la diferencia entre los datos y los valores ajustados</span>
+<span class="s1">residuals = dataset[</span><span class="s4">'target'</span><span class="s1">]-fitted_values</span>
+<span class="s0"># Normalizamos los residuales para entender su comportamiento estadístico</span>
+<span class="s0"># respecto a la regresión lineal</span>
+<span class="s1">normalized_residuals = standardize(residuals)</span>
+<span class="s0"># En este caso, las unidades son desviaciones estándar</span>
+<span class="s1">normalized_residuals.describe()</span>
+<span class="s0">#%% 
+</span><span class="s1">residual_scatter_plot = plt.plot(dataset[</span><span class="s4">'RM'</span><span class="s1">]</span><span class="s2">,</span>
+                                 <span class="s1">normalized_residuals</span><span class="s2">,</span><span class="s4">'bp'</span><span class="s1">)</span>
+<span class="s1">mean_residual = plt.plot([int(x_range[</span><span class="s3">0</span><span class="s1">])</span><span class="s2">,</span><span class="s1">round(x_range[</span><span class="s3">1</span><span class="s1">]</span><span class="s2">,</span><span class="s3">0</span><span class="s1">)]</span><span class="s2">, </span><span class="s1">[</span><span class="s3">0</span><span class="s2">,</span><span class="s3">0</span><span class="s1">]</span><span class="s2">, </span><span class="s4">'-'</span><span class="s2">,</span>
+                         <span class="s1">color=</span><span class="s4">'red'</span><span class="s2">, </span><span class="s1">linewidth=</span><span class="s3">2</span><span class="s1">)</span>
+<span class="s1">upper_bound = plt.plot([int(x_range[</span><span class="s3">0</span><span class="s1">])</span><span class="s2">,</span><span class="s1">round(x_range[</span><span class="s3">1</span><span class="s1">]</span><span class="s2">,</span><span class="s3">0</span><span class="s1">)]</span><span class="s2">, </span><span class="s1">[</span><span class="s3">3</span><span class="s2">,</span><span class="s3">3</span><span class="s1">]</span><span class="s2">, </span><span class="s4">'--'</span><span class="s2">,</span>
+                       <span class="s1">color=</span><span class="s4">'red'</span><span class="s2">, </span><span class="s1">linewidth=</span><span class="s3">1</span><span class="s1">)</span>
+<span class="s1">lower_bound = plt.plot([int(x_range[</span><span class="s3">0</span><span class="s1">])</span><span class="s2">,</span><span class="s1">round(x_range[</span><span class="s3">1</span><span class="s1">]</span><span class="s2">,</span><span class="s3">0</span><span class="s1">)]</span><span class="s2">, </span><span class="s1">[-</span><span class="s3">3</span><span class="s2">,</span><span class="s1">-</span><span class="s3">3</span><span class="s1">]</span><span class="s2">, </span><span class="s4">'--'</span><span class="s2">, </span>
+                       <span class="s1">color=</span><span class="s4">'red'</span><span class="s2">, </span><span class="s1">linewidth=</span><span class="s3">1</span><span class="s1">)</span>
+<span class="s1">malla = plt.grid()</span>
+<span class="s1">plt.show()</span>
+<span class="s0">#%% 
+# Histograma de los residuales normalizados</span>
+<span class="s1">print(type(normalized_residuals))</span>
+<span class="s1">normalized_residuals.plot.hist()</span>
+<span class="s0">#%% 
+# Trazamos una función aproximada de densidad</span>
+<span class="s1">normalized_residuals.plot.kde()</span>
+<span class="s0">#%% md 
+</span><span class="s1">El gráfico de dispersión resultante indica que los residuos muestran algunos de los problemas que mencionamos  
+anteriormente, como una advertencia de que algo no va bien con tu análisis de regresión. 
+</span><span class="s0">#%% md 
+</span><span class="s1">En primer lugar, hay algunos puntos que se encuentran fuera de la banda delimitada por las dos líneas punteadas en los valores residuales normalizados $z=-3$ y $z=+3$ (un rango que hipotéticamente debería cubrir 99,7% de los valores si los residuos tienen una distribución normal). 
+</span><span class="s0">#%% md 
+</span><span class="s1">Entonces, la nube de puntos no está en absoluto dispersa al azar, mostrando diferentes varianzas a diferentes valores de la variable de predicción (el eje de abscisas) y se pueden detectar (puntos en línea recta, o los puntos centrales colocados en una especie de U). 
+</span><span class="s0">#%% md 
+</span><span class="s1">El número medio de habitaciones es probablemente un buen predictor, pero no es la única causa, o hay que replanteársela como causa directa (el número de habitaciones indica una casa más grande, pero *¿qué pasa si las habitaciones son más pequeñas que la media?*) 
+</span><span class="s0">#%% md 
+</span><span class="s1">## Predicciones con un modelo de regresión 
+ 
+Cuando introducimos los coeficientes en la fórmula de regresión, predecir es únicamente cuestión de aplicar los nuevos datos al vector de coeficientes mediante una multiplicación matricial. 
+</span><span class="s0">#%% 
+# Escogemos el número de cuartos</span>
+<span class="s1">RM = </span><span class="s3">5 </span>
+<span class="s0"># Creamos un vector adecuado para insertar en el modelo</span>
+<span class="s1">Xp = np.array([</span><span class="s3">1</span><span class="s2">,</span><span class="s1">RM]) </span>
+<span class="s1">print(fitted_model.predict(Xp))</span>
+<span class="s1">y_pred = fitted_model.predict(Xp)[</span><span class="s3">0</span><span class="s1">]*</span><span class="s3">1000</span>
+<span class="s0"># Realizamos la predicción</span>
+<span class="s1">print(</span><span class="s4">&quot;&quot;&quot; 
+De acuerdo a nuestro modelos,  
+si el número de cuarto es {},  
+entonces el valor de la casa  
+será de ${:.2f}&quot;&quot;&quot;</span><span class="s1">.format(RM</span><span class="s2">, </span><span class="s1">y_pred))</span>
+<span class="s0">#%% md 
+</span><span class="s1">Un buen uso del método de predicción es proyectar los valores ajustados en nuestro gráfico de dispersión anterior para permitirnos visualizar la dinámica de los precios con respecto a nuestro predictor, el número medio de habitaciones: 
+</span><span class="s0">#%% 
+</span><span class="s1">x_range = [dataset[</span><span class="s4">'RM'</span><span class="s1">].min()</span><span class="s2">,</span><span class="s1">dataset[</span><span class="s4">'RM'</span><span class="s1">].max()] </span>
+<span class="s1">y_range = [dataset[</span><span class="s4">'target'</span><span class="s1">].min()</span><span class="s2">,</span><span class="s1">dataset[</span><span class="s4">'target'</span><span class="s1">].max()] </span>
+<span class="s1">scatter_plot = dataset.plot(kind=</span><span class="s4">'scatter'</span><span class="s2">, </span>
+                            <span class="s1">x=</span><span class="s4">'RM'</span><span class="s2">, </span><span class="s1">y=</span><span class="s4">'target'</span><span class="s2">,</span>
+                            <span class="s1">xlim=x_range</span><span class="s2">, </span>
+                            <span class="s1">ylim=y_range</span><span class="s2">,</span>
+                           <span class="s1">alpha=</span><span class="s3">0.25</span><span class="s1">) </span>
+<span class="s1">meanY = scatter_plot.plot(x_range</span><span class="s2">,</span>
+                          <span class="s1">[dataset[</span><span class="s4">'target'</span><span class="s1">].mean()</span><span class="s2">,</span><span class="s1">dataset[</span><span class="s4">'target'</span><span class="s1">].mean()]</span><span class="s2">, </span>
+                          <span class="s4">'--'</span><span class="s2">, </span><span class="s1">color=</span><span class="s4">'red'</span><span class="s2">, </span><span class="s1">linewidth=</span><span class="s3">1</span><span class="s1">) </span>
+<span class="s1">meanX = scatter_plot.plot([dataset[</span><span class="s4">'RM'</span><span class="s1">].mean()</span><span class="s2">, </span><span class="s1">dataset[</span><span class="s4">'RM'</span><span class="s1">].mean()]</span><span class="s2">, </span>
+                          <span class="s1">y_range</span><span class="s2">, </span><span class="s4">'--'</span><span class="s2">, </span><span class="s1">color=</span><span class="s4">'red'</span><span class="s2">, </span><span class="s1">linewidth=</span><span class="s3">1</span><span class="s1">) </span>
+<span class="s1">regression_line = scatter_plot.plot(dataset[</span><span class="s4">'RM'</span><span class="s1">]</span><span class="s2">, </span>
+                                    <span class="s1">fitted_values</span><span class="s2">,</span>
+                                    <span class="s4">'-'</span><span class="s2">,</span><span class="s1">color=</span><span class="s4">'green'</span><span class="s2">, </span><span class="s1">linewidth=</span><span class="s3">2</span><span class="s1">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">Además del método de predicción ya implementado, la generación de las predicciones es bastante fácil con solo utilizar la función `dot()` en NumPy. 
+</span><span class="s0">#%% 
+</span><span class="s1">predictions_by_dot_product = np.dot(X</span><span class="s2">,</span><span class="s1">betas) </span>
+<span class="s1">print(</span><span class="s4">&quot;Usando el método implementado:</span><span class="s2">\n</span><span class="s4">{}&quot;</span><span class="s1">.format(fitted_values[:</span><span class="s3">10</span><span class="s1">].to_numpy()))</span>
+<span class="s1">print(</span><span class="s4">&quot;Usando el producto punto:\{}&quot;</span><span class="s1">.format(predictions_by_dot_product[:</span><span class="s3">10</span><span class="s1">]))</span>
+<span class="s0">#%% md 
+</span><span class="s1">## Regresión con Scikit-learn  
+ 
+Como hemos visto al trabajar con el paquete StatsModels, se puede construir un modelo lineal utilizando un paquete de aprendizaje automático más orientado como Scikit-learn.  
+</span><span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Usando el módulo `linear_model()`, podemos establecer un modelo de regresión lineal especificando que los predictores  
+no deben ser normalizados y que nuestro modelo debe tener un sesgo: 
+&quot;&quot;&quot;</span>
+<span class="s2">from </span><span class="s1">sklearn </span><span class="s2">import </span><span class="s1">linear_model </span>
+<span class="s1">linear_regression = linear_model.LinearRegression(normalize=</span><span class="s2">False, </span><span class="s1">fit_intercept=</span><span class="s2">True</span><span class="s1">)</span>
+<span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+La preparación de los datos, en cambio, requiere el recuento de las observaciones y la preparación cuidadosa de la  
+matriz del predictor para especificar sus dos dimensiones (si se deja como un vector, el procedimiento de ajuste error): 
+&quot;&quot;&quot;</span>
+<span class="s1">observations = len(dataset) </span>
+<span class="s1">X = dataset[</span><span class="s4">'RM'</span><span class="s1">].values.reshape((observations</span><span class="s2">,</span><span class="s3">1</span><span class="s1">)) </span><span class="s0"># X debe reformarse como una matrix renglón</span>
+<span class="s1">print(X.shape)</span>
+<span class="s1">y = dataset[</span><span class="s4">'target'</span><span class="s1">].values </span><span class="s0"># pero y seguirá siendo un vector</span>
+<span class="s1">print(y.shape)</span>
+<span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Una vez completados todos los pasos anteriores, podemos ajustar el modelo mediante el método de ajuste: 
+&quot;&quot;&quot;</span>
+<span class="s1">linear_regression.fit(X</span><span class="s2">,</span><span class="s1">y)</span>
+<span class="s0">#%% md 
+</span><span class="s1">Una característica muy conveniente del paquete Scikit-learn es que todos los modelos, sin importar su tipo de complejidad, comparten los mismos métodos.  
+</span><span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+El método `fit()` se utiliza siempre para el ajuste y espera una X y una y (cuando el modelo es supervisado).  
+En cambio, los dos métodos habituales para hacer una predicción exacta (siempre para la regresión) y su probabilidad  
+(cuando el modelo es probabilístico) son `predict()` y `predict_proba()`, respectivamente. 
+&quot;&quot;&quot;</span>
+<span class="s1">print(linear_regression.coef_) </span>
+<span class="s1">print(linear_regression.intercept_)</span>
+<span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Utilizando el método de predicción y restringiéndonos los 10 primeros elementos de la lista resultante,  
+obtenemos los 10 primeros valores ajustados: 
+&quot;&quot;&quot;</span>
+<span class="s1">print(linear_regression.predict(X)[:</span><span class="s3">10</span><span class="s1">])</span>
+<span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Como se ha visto anteriormente, si preparamos una nueva matriz y añadimos una constante,  
+podemos calcular los resultados por nosotros mismos utilizando una simple multiplicación matriz-vector: 
+&quot;&quot;&quot;</span>
+<span class="s1">Xp = np.column_stack((X</span><span class="s2">,</span><span class="s1">np.ones(observations))) </span>
+<span class="s1">v_coef = list(linear_regression.coef_) + [linear_regression.intercept_]</span>
+<span class="s1">print(v_coef)</span>
+<span class="s0">#%% 
+</span><span class="s4">&quot;&quot;&quot; 
+Como era de esperar, el resultado del producto nos proporciona las mismas estimaciones que el método de predicción: 
+&quot;&quot;&quot;</span>
+<span class="s1">np.dot(Xp</span><span class="s2">,</span><span class="s1">v_coef)[:</span><span class="s3">10</span><span class="s1">]</span>
+<span class="s0">#%% md 
+</span><span class="s1">En este punto, sería natural cuestionar el uso de dicho módulo. En comparación con las funciones anteriores ofrecidas por Statsmodels, Scikit-learn parece ofrecer pocos resultados estadísticos, y aparentemente con muchas características de regresión lineal eliminadas. 
+</span><span class="s0">#%% md 
+ </span><span class="s1">**En realidad, Scikit-learn ofrece exactamente lo que se necesita en la ciencia de los datos y tiene un rendimiento perfectamente rápido cuando se trata de grandes conjuntos de datos.** 
+</span><span class="s0">#%% md 
+</span><span class="s1">Si estás trabajando en IPython, has la siguiente prueba para generar un gran conjunto de datos y comprobar el rendimiento de las dos versiones de la regresión lineal: 
+</span><span class="s0">#%% 
+# make_regression genera un problema de regresión aleatorio</span>
+<span class="s2">from </span><span class="s1">sklearn.datasets </span><span class="s2">import </span><span class="s1">make_regression </span>
+<span class="s1">HX</span><span class="s2">, </span><span class="s1">Hy = make_regression(n_samples=</span><span class="s3">10000000</span><span class="s2">, </span><span class="s1">n_features=</span><span class="s3">1</span><span class="s2">,</span><span class="s1">n_targets=</span><span class="s3">1</span><span class="s2">,</span><span class="s1">random_state=</span><span class="s3">101</span><span class="s1">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">Después de generar diez millones de observaciones de una sola variable, comience a medir utilizando la función mágica %%time para IPython. 
+</span><span class="s0">#%% 
+</span><span class="s1">%%time </span>
+<span class="s1">sk_linear_regression = linear_model.LinearRegression(</span>
+    <span class="s1">normalize=</span><span class="s2">False,</span>
+    <span class="s1">fit_intercept=</span><span class="s2">True</span><span class="s1">)</span>
+<span class="s1">sk_linear_regression.fit(HX</span><span class="s2">,</span><span class="s1">Hy)</span>
+<span class="s0">#%% 
+</span><span class="s1">%%time </span>
+<span class="s1">sm_linear_regression = sm.OLS(</span>
+    <span class="s1">Hy</span><span class="s2">,</span>
+    <span class="s1">sm.add_constant(HX))</span>
+<span class="s1">sm_linear_regression.fit()</span>
+<span class="s0">#%% md 
+</span><span class="s1">## Resumen 
+ 
+En este capítulo hemos presentado la regresión lineal como algoritmo de aprendizaje automático supervisado.  
+</span><span class="s0">#%% md 
+</span><span class="s1">Explicamos su forma funcional, su relación con las medidas estadísticas de la media y la correlación, e intentamos construir un modelo de regresión lineal simple sobre los datos de los precios de la vivienda en Boston.  
+</span><span class="s0">#%% md 
+</span><span class="s1">Después de hacer esto, finalmente echamos un vistazo a cómo funciona la regresión bajo el capó proponiendo sus formulaciones matemáticas clave y su traducción al código Python. 
+</span><span class="s0">#%% md 
+</span><span class="s1">**¡Gracias por su participación!**</span></pre>
+</body>
+</html>
